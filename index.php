@@ -2,7 +2,7 @@
 /**
  * AppName: Domain Checker
  * Description: PHP Script to check a domain name and if exists, then show the registration record and then show DNS records .  If it does not exist, then say so and if the variable is set, ovver to register it.
- * Version: 1.1.3 
+ * Version: 1.1.4 
  * Author: Jorge Pereira
  */
  
@@ -23,8 +23,9 @@ if (php_sapi_name() === 'cli-server') {
 class DomainChecker {
     private $timeout;    
     private $whoisApiKey;
-    private $useApi;
+    private $useApi;    
     private $txtRegistrationURL;
+    private $appInfo;
 
     public function __construct() {
         // Load configuration
@@ -35,8 +36,58 @@ class DomainChecker {
         $this->whoisApiKey = $config['whois_api']['key'];
         $this->useApi = $config['whois_api']['enabled'];
         $this->txtRegistrationURL = $config['registration']['url'];
+        
+        // Parse app info from file comments
+        $this->appInfo = $this->parseAppInfo();
     }
 
+    private function parseAppInfo(): array {
+        $defaultInfo = [
+            'name' => 'Domain Checker',
+            'version' => '1.1.3',
+            'author' => 'Jorge Pereira'
+        ];
+
+        // Get the content of the current file
+        $content = file_get_contents(__FILE__);
+        if ($content === false) {
+            return $defaultInfo;
+        }
+
+        // Extract the doc block
+        if (preg_match('/\/\*\*.*?\*\//s', $content, $matches)) {
+            $docBlock = $matches[0];
+            
+            // Define patterns that exactly match your comment format
+            $patterns = [
+                'name' => '/\* AppName: ([^\n]+)/',
+                'version' => '/\* Version: ([^\n]+)/',
+                'author' => '/\* Author: ([^\n]+)/'
+            ];
+
+            $info = $defaultInfo; // Start with default values
+            
+            foreach ($patterns as $key => $pattern) {
+                if (preg_match($pattern, $docBlock, $matches)) {
+                    $value = trim($matches[1]);
+                    if (!empty($value)) {
+                        $info[$key] = $value;
+                    }
+                }
+            }
+            
+            return $info;
+        }
+
+        return $defaultInfo;
+    }
+
+    public function getAppInfo(): array {
+        return $this->appInfo;
+
+    }
+
+    
     private function logEvent(string $domain, bool $available) {
     $logFilePath = 'domain_checker.log'; // Adjust the path as needed
     $timestamp = date('Y-m-d H:i:s');
@@ -73,9 +124,9 @@ class DomainChecker {
           
 		  $this->logEvent($domain, $result['available']);
 
-			if ($result['available']) {
-				$result['message'] = "Secure this domain today! <a href='{$this->txtRegistrationURL}'>Register now</a>";
-			}		  
+          if ($result['available']) {
+            $result['message'] = "Secure this domain today! <a href='{$this->txtRegistrationURL}' target='_blank'>Register now</a>";
+        }		  
 			  
             return $result;
             
@@ -331,6 +382,13 @@ if (isset($_GET['domain'])) {
     }
     exit;
 }
+
+
+// Get app info for the footer
+$checker = new DomainChecker();
+$appInfo = $checker->getAppInfo();
+
+
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -440,10 +498,15 @@ if (isset($_GET['domain'])) {
         </div>
     </div>
 
+
     <footer>
         <div class="container">
             <div class="footer-content">
-                AppName: Domain Checker | Version: 1.2.1 | Author: Jorge Pereira
+                <?php 
+                echo htmlspecialchars($appInfo['name']) . ' | ' .
+                     'Version: ' . htmlspecialchars($appInfo['version']) . ' | ' .
+                     'Author: ' . htmlspecialchars($appInfo['author']);
+                ?>
             </div>
         </div>
     </footer>

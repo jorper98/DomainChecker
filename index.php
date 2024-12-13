@@ -2,31 +2,22 @@
 /**
  * AppName: Domain Checker
  * Description: PHP Script to check a domain name and if exists, then show the registration record and then show DNS records .  If it does not exist, then say so and if the variable is set, ovver to register it.
- * Version: 1.2.3 
+ * Version: 1.1.1
  * Author: Jorge Pereira
  */
  
- // Enable error reporting for debugging (remove in production)
+ 
+// Enable error reporting for debugging (remove in production)
 ini_set('display_errors', 0);
 error_reporting(0);
 
-
 class DomainChecker {
-    private $timeout;    
-    private $whoisApiKey;
-    private $useApi;
-    private $txtRegistrationURL;
+   private $timeout = 5;    
+    private $whoisApiKey = 'at_W6dvX7qmvjmbBU4y8Xz2isiSavqyr'; // Replace with your WHOIS API key
 
-    public function __construct() {
-        // Load configuration
-        $config = require 'config.php';
-        
-        // Set instance variables from config
-        $this->timeout = $config['timeout'];
-        $this->whoisApiKey = $config['whois_api']['key'];
-        $this->useApi = $config['whois_api']['enabled'];
-        $this->txtRegistrationURL = $config['registration']['url'];
-    }
+    //  private $whoisApiKey = ''; // WhoisXMLAPI key (optional)
+    private $useApi = true;    // Set to false to force native WHOIS
+	private $txtRegistrationURL = "https://35sites.com/Register";
 
     private function logEvent(string $domain, bool $available) {
     $logFilePath = 'domain_checker.log'; // Adjust the path as needed
@@ -311,111 +302,60 @@ if (isset($_GET['domain'])) {
     <style>
         body {
             display: flex;
-            flex-direction: column;
             min-height: 100vh;
+            align-items: center;
             background-color: #f8f9fa;
         }
-
-        header {
-            background-color: #343a40;
-            color: white;
-            padding: 1rem 0;
-            margin-bottom: 2rem;
-        }
-
-        .main-content {
-            flex: 1;
-            display: flex;
-            align-items: center;
-            width: 100%;
-        }
-
         .domain-checker {
             width: 100%;
             max-width: 600px;
             margin: 0 auto;
             padding: 20px;
         }
-
         .result-box {
             margin-top: 20px;
             display: none;
         }
-
         .dns-records-container {
             display: none;
             margin-top: 15px;
         }
-
         .btn-toggle-records {
             margin-top: 10px;
         }
-
         .records-table {
             margin-top: 15px;
-        }
-
-        footer {
-            background-color: #343a40;
-            color: #ffffff;
-            padding: 1rem 0;
-            margin-top: 2rem;
-            text-align: center;
-        }
-
-        .footer-content {
-            font-size: 0.9rem;
-            opacity: 0.8;
         }
     </style>
 </head>
 <body>
-    <header>
-        <div class="container">
-            <div class="row">
-                <div class="col text-center">
-                    <h1>Domain Availability Checker</h1>
-                </div>
-            </div>
-        </div>
-    </header>
-
-    <div class="main-content">
-        <div class="container">
-            <div class="domain-checker">
-                <div class="card">
-                    <div class="card-body">
-                        <form id="domainForm">
-                            <div class="input-group mb-3">
-                                <input type="text" class="form-control" id="domainInput" 
-                                       placeholder="Enter domain name (e.g., example.com)" required>
-                                <button class="btn btn-primary" type="submit" id="checkButton">
-                                    Check Availability
-                                </button>
-                            </div>
-                        </form>
-                        
-                        <div id="resultBox" class="result-box">
-                            <div id="statusMessage" class="alert"></div>
-                            <div id="whoisInfo"></div>
-                            <div id="dnsButtonContainer" style="display: none;">
-                            </div>
-                            <div id="dnsRecords" class="dns-records-container"></div>
-                            <p id="registrationMessage"></p>
+    <div class="container">
+        <div class="domain-checker">
+            <h2 class="text-center mb-4">Domain Availability Checker</h2>
+            <div class="card">
+                <div class="card-body">
+                    <form id="domainForm">
+                        <div class="input-group mb-3">
+                            <input type="text" class="form-control" id="domainInput" 
+                                   placeholder="Enter domain name (e.g., example.com)" required>
+                            <button class="btn btn-primary" type="submit" id="checkButton">
+                                Check Availability
+                            </button>
                         </div>
-                    </div>
+                    </form>
+                    
+                    <div id="resultBox" class="result-box">
+						<div id="statusMessage" class="alert"></div>
+						<div id="whoisInfo"></div>
+						<div id="dnsButtonContainer" style="display: none;">
+							</div>
+						<div id="dnsRecords" class="dns-records-container"></div>
+						<p id="registrationMessage"></p>
+					</div>
                 </div>
             </div>
         </div>
     </div>
-
-    <footer>
-        <div class="container">
-            <div class="footer-content">
-                AppName: Domain Checker | Version: 1.2.1 | Author: Jorge Pereira
-            </div>
-        </div>
-    </footer>
 
     <script>
         let dnsRecordsVisible = false;

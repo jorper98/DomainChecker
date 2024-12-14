@@ -6,6 +6,8 @@ PHP Script to check a domain name
  If exists, then show the registration record and then show DNS records. 
  If it does not exist, then say so and if the variable is set, ovver to register it.
 
+## Demo Site
+https://apps.jorgep.com/DomainChecker/
 
 # Changelog
 
